@@ -107,3 +107,7 @@ def show_defi_analysis():
                 st.dataframe(df, use_container_width=True)
                 
                 st.warning("⚠ High bad debt risk in extreme scenarios")
+
+if __name__ == "__main__":
+    show_defi_analysis()
+
