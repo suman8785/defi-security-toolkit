@@ -1,11 +1,6 @@
-streamlit==1.20.0
-web3==5.31.3
-eth-brownie==1.19.3
-slither-analyzer==0.9.6
-mythril==0.23.25
-pandas==1.5.3
+streamlit==1.28.0
+web3==6.11.0
+pandas==2.1.1
 plotly==5.17.0
 requests==2.31.0
-python-dotenv==0.16.0
-sqlalchemy==2.0.21
-pyyaml==5.4.1
+python-dotenv==1.0.0
