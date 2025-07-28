@@ -1,0 +1,52 @@
+project_structure:
+    build: build
+    contracts: contracts
+    interfaces: interfaces
+    reports: reports
+    scripts: scripts
+    tests: tests
+
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@4.8.0
+
+compiler:
+    solc:
+        version: 0.8.19
+        optimizer:
+            enabled: true
+            runs: 200
+        remappings:
+          - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.8.0"
+
+networks:
+    default: development
+    development:
+        host: http://127.0.0.1:8545
+        gas_limit: 12000000
+        gas_price: 20000000000
+        reverting_tx_gas_limit: 8000000
+    mainnet-fork:
+        host: http://127.0.0.1:8545
+        timeout: 120
+        gas_limit: 12000000
+        gas_price: 20000000000
+    sepolia:
+        host: https://sepolia.infura.io/v3/$WEB3_INFURA_PROJECT_ID
+        priority_fee: 2000000000
+        max_fee: 50000000000
+
+wallets:
+    from_key: ${PRIVATE_KEY}
+    from_mnemonic: ${MNEMONIC}
+
+hypothesis:
+    deadline: null
+    max_examples: 50
+    report_multiple_bugs: False
+    stateful_step_count: 10
+    phases:
+        explicit: true
+        reuse: true
+        generate: true
+        target: true
+        shrink: true

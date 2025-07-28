@@ -1,0 +1,14 @@
+# Echidna configuration file
+testLimit: 50000
+timeout: 1800
+prefix: "echidna_"
+corpusDir: "echidna-corpus"
+coverage: true
+format: text
+seqLen: 100
+testMode: assertion
+shrinkLimit: 5000
+contractAddr: "0x00a329c0648769A73afAc7F9381E08FB43dBEA72"
+deployer: "0x00a329c0648769A73afAc7F9381E08FB43dBEA72"
+sender: ["0x10000", "0x20000", "0x30000"]
+psender: "0x00a329c0648769A73afAc7F9381E08FB43dBEA72"
