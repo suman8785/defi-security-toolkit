@@ -16,6 +16,17 @@ from backend import (
 )
 from config import *
 
+if hasattr(st, 'secrets'):
+    st.info("""
+    ℹ️ **Running on Streamlit Cloud** 
+    
+    Some features are running in demo mode:
+    - Slither and Mythril analyses show simulated results
+    - For full functionality, please run locally
+    
+    All other features work normally!
+    """)
+
 # Page configuration
 st.set_page_config(
     page_title="DeFi Security Toolkit",
