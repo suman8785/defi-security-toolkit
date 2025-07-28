@@ -16,6 +16,16 @@ from backend import (
 )
 from config import *
 
+
+
+# Page configuration
+st.set_page_config(
+    page_title="DeFi Security Toolkit",
+    page_icon="🛡",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 if hasattr(st, 'secrets'):
     st.info("""
     ℹ️ **Running on Streamlit Cloud** 
@@ -26,14 +36,6 @@ if hasattr(st, 'secrets'):
     
     All other features work normally!
     """)
-
-# Page configuration
-st.set_page_config(
-    page_title="DeFi Security Toolkit",
-    page_icon="🛡",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Custom CSS
 st.markdown("""
