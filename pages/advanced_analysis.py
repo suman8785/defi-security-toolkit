@@ -191,3 +191,7 @@ def show_advanced_analysis():
             with col1:
                 for tool, count in zip(tools, findings):
                     st.metric(f"{tool} Findings", count)
+
+if __name__ == "__main__":
+    show_advanced_analysis()
+
