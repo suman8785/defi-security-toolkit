@@ -23,3 +23,6 @@ A comprehensive security analysis platform for smart contracts, featuring static
 ```bash
 git clone https://github.com/yourusername/defi-security-toolkit.git
 cd defi-security-toolkit
+
+##Link to open it
+https://defi-security-toolkit-54k4ppjx8ec3f8p5omegad.streamlit.app/
