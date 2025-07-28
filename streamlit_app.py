@@ -26,17 +26,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-if hasattr(st, 'secrets'):
-    st.info("""
-    ℹ️ **Running on Streamlit Cloud** 
-    
-    Some features are running in demo mode:
-    - Slither and Mythril analyses show simulated results
-    - For full functionality, please run locally
-    
-    All other features work normally!
-    """)
-
 # Custom CSS
 st.markdown("""
 <style>
