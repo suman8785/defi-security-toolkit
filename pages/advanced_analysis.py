@@ -3,6 +3,10 @@ import pandas as pd
 import plotly.graph_objects as go
 from backend import gas_analyzer, formal_verifier, vulnerability_db
 
+if 'uploaded_contract' not in st.session_state:
+    st.session_state.uploaded_contract = None
+
+
 def show_advanced_analysis():
     st.header("🔬 Advanced Analysis Tools")
     
