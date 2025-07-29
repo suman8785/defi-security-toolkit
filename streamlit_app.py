@@ -16,6 +16,8 @@ from backend import (
     attack_simulator,
     report_generator
 )
+simulator = attack_simulator.simulator
+
 from config import *
 
 
