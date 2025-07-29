@@ -29,11 +29,18 @@ class EchidnaRunner:
             cmd = [
                 "echidna-test",
                 contract_path,
-                "--contract", contract_name or "VulnerableToken",
+                #changed
+                "--contract", contract_name or Path(contract_path).stem
                 "--config", str(temp_config)
             ]
             
             result = subprocess.run(
+
+                #changed
+                print("STDOUT:\n", result.stdout),
+                print("STDERR:\n", result.stderr),
+
+
                 cmd,
                 capture_output=True,
                 text=True,
@@ -70,7 +77,7 @@ class EchidnaRunner:
             'seqLen': 50,
             'testMode': 'assertion',
             'shrinkLimit': 5000,
-            'contractName': contract_name or Path(contract_path).stem
+            #'contractName': contract_name or Path(contract_path).stem
         }
     
     def _parse_results(self, stdout: str, stderr: str) -> Dict[str, Any]:
