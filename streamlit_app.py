@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 import tempfile
 from datetime import datetime
-# streamlit_app.py
-from attack_simulator import simulator as attack_simulator
+
+
 
 from backend import (
     contract_parser,
