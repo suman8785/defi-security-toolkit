@@ -5,7 +5,7 @@ from web3 import Web3
 import random
 
 class AttackSimulator:
-    def _init_(self):
+    def __init__(self):
         self.simulations = []
     
     def simulate_flashloan(self, target_address: str, loan_amount: float, attack_steps: str) -> Dict[str, Any]:
