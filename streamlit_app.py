@@ -29,11 +29,23 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
 <style>
+    /* Existing styles */
     .stAlert {
-        background-color: #f0f2f6;
         border-radius: 10px;
         padding: 10px;
     }
+
+    /* Modify .stAlert info box text to black */
+    .stAlert p {
+        color: black !important;
+    }
+
+    /* Optional: override background color if needed */
+    .stAlert[data-testid="stAlertInfo"] {
+        background-color: #aad8ff; /* softer blue */
+    }
+
+    /* Your custom vulnerability tags */
     .vulnerability-high {
         background-color: #ff4b4b;
         color: white;
@@ -54,6 +66,7 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
 
 # Initialize session state
 if 'analysis_results' not in st.session_state:
