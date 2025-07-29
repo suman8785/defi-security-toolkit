@@ -258,7 +258,7 @@ class AttackSimulator:
 
         self.simulations.append(simulation)
         return simulation
-    def simulate_reentrancy(target_address: str, attack_depth: int) -> Dict[str, Any]:
+    def run_reentrancy_simulation(target_address: str, attack_depth: int) -> Dict[str, Any]:
         return simulator.simulate_reentrancy(target_address, attack_depth)
 
 
