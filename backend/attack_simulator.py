@@ -13,7 +13,16 @@ class AttackSimulator:
         simulation_id = f"FL_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
         # Parse attack steps
-        steps = [s.strip() for s in attack_steps.split('\n') if s.strip()]
+        if isinstance(attack_steps, str):
+            try:
+                # Try to parse as JSON array first
+                import json
+                steps = json.loads(attack_steps)
+            except:
+                # Otherwise split by newlines
+                steps = [s.strip() for s in attack_steps.split('\n') if s.strip()]
+        else:
+            steps = attack_steps if isinstance(attack_steps, list) else []
         
         # Simulate execution
         execution_results = []
@@ -24,52 +33,33 @@ class AttackSimulator:
             gas_used = random.randint(50000, 200000)
             success = random.choice([True, True, True, False])  # 75% success rate
             
-            if 'borrow' in step.lower():
-                result = {
-                    'step': i + 1,
-                    'action': step,
-                    'status': 'Success' if success else 'Failed',                                                                                                                                                                                                              '                    gas_used': gas_used,
-                    'details': f"Borrowed {loan_amount} ETH from lending pool"
-                }
-            elif 'manipulate' in step.lower():
+            result = {
+                'step': i + 1,
+                'action': step,
+                'status': 'Success' if success else 'Failed',
+                'gas_used': gas_used  # Make sure this is always present
+            }
+            
+            # Add specific details based on step content
+            step_lower = step.lower()
+            
+            if 'borrow' in step_lower:
+                result['details'] = f"Borrowed {loan_amount} ETH from lending pool"
+            elif 'manipulate' in step_lower or 'oracle' in step_lower:
                 manipulation_impact = random.uniform(0.05, 0.20)  # 5-20% price impact
-                result = {
-                    'step': i + 1,
-                    'action': step,
-                    'status': 'Success' if success else 'Failed',
-                    'gas_used': gas_used,
-                    'details': f"Price manipulated by {manipulation_impact*100:.2f}%"
-                }
-            elif 'exploit' in step.lower() or 'arbitrage' in step.lower():
+                result['details'] = f"Price manipulated by {manipulation_impact*100:.2f}%"
+            elif 'buy' in step_lower or 'sell' in step_lower or 'arbitrage' in step_lower:
                 profit = loan_amount * random.uniform(0.01, 0.05) if success else 0
                 total_profit += profit
-                result = {
-                    'step': i + 1,
-                    'action': step,
-                    'status': 'Success' if success else 'Failed',
-                    'gas_used': gas_used,
-                    'details': f"Profit: {profit:.4f} ETH"
-                }
-            elif 'repay' in step.lower():
-                result = {
-                    'step': i + 1,
-                    'action': step,
-                    'status': 'Success' if success else 'Failed',
-                    'gas_used': gas_used,
-                    'details': f"Repaid {loan_amount} ETH + fees"
-                }
+                result['details'] = f"Profit: {profit:.4f} ETH"
+            elif 'repay' in step_lower:
+                result['details'] = f"Repaid {loan_amount} ETH + fees"
             else:
-                result = {
-                    'step': i + 1,
-                    'action': step,
-                    'status': 'Success' if success else 'Failed',
-                    'gas_used': gas_used,
-                    'details': 'Step executed'
-                }
+                result['details'] = 'Step executed'
             
             execution_results.append(result)
         
-        # Calculate totals
+        # Calculate totals - now safe because all results have gas_used
         total_gas = sum(r['gas_used'] for r in execution_results)
         gas_cost_eth = total_gas * 0.00000003  # Assume 30 gwei gas price
         net_profit = total_profit - gas_cost_eth
