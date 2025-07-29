@@ -6,11 +6,11 @@ from typing import Dict, List, Any
 import logging
 from config import LOGS_DIR
 
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
 class EchidnaRunner:
-    def _init_(self):
-        self.config_path = Path(_file_).parent.parent / "echidna.yaml"
+    def __init__(self):
+        self.config_path = Path(__file__).parent.parent / "echidna.yaml"
         self.corpus_dir = LOGS_DIR / "echidna-corpus"
         self.corpus_dir.mkdir(exist_ok=True)
     
