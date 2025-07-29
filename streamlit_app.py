@@ -258,35 +258,35 @@ elif page == "Attack Simulation":
                     )
                     
                     st.success("Simulation Complete!")
-                                    st.json(results)
+                    st.json(results)
+            
+        elif attack_type == "Reentrancy Attack":
+            st.subheader("Reentrancy Attack Simulation")
+            contract_address = st.text_input("Vulnerable Contract Address", "0x...")
+            attack_depth = st.slider("Attack Depth (Recursive Calls)", min_value=1, max_value=10, value=3)
 
-    elif attack_type == "Reentrancy Attack":
-        st.subheader("Reentrancy Attack Simulation")
-        contract_address = st.text_input("Vulnerable Contract Address", "0x...")
-        attack_depth = st.slider("Attack Depth (Recursive Calls)", min_value=1, max_value=10, value=3)
+            if st.button("♻️ Simulate Reentrancy"):
+                with st.spinner("Simulating reentrancy attack..."):
+                    results = attack_simulator.simulate_reentrancy(
+                        contract_address,
+                        attack_depth
+                    )
+                    st.success("Simulation Complete!")
+                    st.json(results)
 
-        if st.button("♻️ Simulate Reentrancy"):
-            with st.spinner("Simulating reentrancy attack..."):
-                results = attack_simulator.simulate_reentrancy(
-                    contract_address,
-                    attack_depth
-                )
-                st.success("Simulation Complete!")
-                st.json(results)
+        elif attack_type == "Front-Running":
+            st.subheader("Front-Running Attack Simulation")
+            pending_tx = st.text_input("Pending Victim Transaction Hash", "0x...")
+            gas_price_boost = st.slider("Gas Price Boost (%)", min_value=0, max_value=200, value=50)
 
-    elif attack_type == "Front-Running":
-        st.subheader("Front-Running Attack Simulation")
-        pending_tx = st.text_input("Pending Victim Transaction Hash", "0x...")
-        gas_price_boost = st.slider("Gas Price Boost (%)", min_value=0, max_value=200, value=50)
-
-        if st.button("🚨 Simulate Front-Running"):
-            with st.spinner("Simulating front-running attack..."):
-                results = attack_simulator.simulate_front_running(
-                    pending_tx,
-                    gas_price_boost
-                )
-                st.success("Simulation Complete!")
-                st.json(results)
+            if st.button("🚨 Simulate Front-Running"):
+                with st.spinner("Simulating front-running attack..."):
+                    results = attack_simulator.simulate_front_running(
+                        pending_tx,
+                        gas_price_boost
+                    )
+                    st.success("Simulation Complete!")
+                    st.json(results)
     
     with col2:
         st.info("""
