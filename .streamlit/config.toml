@@ -1,8 +1,13 @@
 [theme]
-base = "dark"
-primaryColor = "#00FFAA"                # Neon Green for highlights/buttons
-backgroundColor = "#0E1117"             # Very dark background
-secondaryBackgroundColor = "#1E1E2E"    # Slight contrast for input sections
-textColor = "#F0F0F0"                   # Light text color for better readability
-font = "sans serif"                     # Clean modern font
+primaryColor = "#FF6B6B"
+backgroundColor = "#0E1117"
+secondaryBackgroundColor = "#262730"
+textColor = "#FAFAFA"
 
+[server]
+maxUploadSize = 10
+enableCORS = false
+
+[browser]
+
+gatherUsageStats = false this is my code
