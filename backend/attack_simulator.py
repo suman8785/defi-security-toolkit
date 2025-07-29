@@ -216,6 +216,53 @@ class AttackSimulator:
             }
         }
 
+
+    def simulate_reentrancy(self, target_address: str, attack_depth: int) -> Dict[str, Any]:
+        """Simulate a reentrancy attack"""
+        simulation_id = f"RE_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    
+        calls = []
+        for i in range(attack_depth):
+            gas_used = random.randint(30000, 90000)
+            success = random.choice([True, True, False])
+            calls.append({
+                "call_number": i + 1,
+                "gas_used": gas_used,
+                "status": "Success" if success else "Failed",
+                "description": f"Recursive call {i+1} to vulnerable function"
+            })
+
+        total_gas = sum(call["gas_used"] for call in calls)
+        net_effect = "Contract drained" if all(c["status"] == "Success" for c in calls) else "Partial failure"
+
+        simulation = {
+            "simulation_id": simulation_id,
+            "type": "Reentrancy Attack",
+            "target": target_address,
+            "timestamp": datetime.now().isoformat(),
+            "parameters": {
+                "attack_depth": attack_depth
+            },
+            "calls": calls,
+            "summary": {
+                "total_calls": len(calls),
+                "successful_calls": sum(1 for c in calls if c["status"] == "Success"),
+                "total_gas_used": total_gas,
+                "net_effect": net_effect
+            },
+            "risk_assessment": {
+                "risk_score": min(100, attack_depth * 10),
+                "risk_level": "High" if attack_depth > 5 else "Medium" if attack_depth > 2 else "Low"
+            }
+        }
+
+        self.simulations.append(simulation)
+        return simulation
+    def simulate_reentrancy(target_address: str, attack_depth: int) -> Dict[str, Any]:
+        return simulator.simulate_reentrancy(target_address, attack_depth)
+
+
+
 # Module-level functions
 simulator = AttackSimulator()
 
