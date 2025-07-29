@@ -10,4 +10,4 @@ enableCORS = false
 
 [browser]
 
-gatherUsageStats = false this is my code
+gatherUsageStats = false
