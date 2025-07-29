@@ -5,14 +5,14 @@ import markdown
 from pathlib import Path
 
 class ReportGenerator:
-    def __init__(self):
-        self.templates = {
-            'executive_summary': self._executive_summary_template,
-            'vulnerability_details': self._vulnerability_details_template,
-            'code_analysis': self._code_analysis_template,
-            'recommendations': self._recommendations_template,
-            'risk_matrix': self._risk_matrix_template
-        }
+    def __init__(self):
+        self.templates = {
+            'executive_summary': self._executive_summary_template,
+            'vulnerability_details': self._vulnerability_details_template,
+            'code_analysis': self._code_analysis_template,
+            'recommendations': self._recommendations_template,
+            'risk_matrix': self._risk_matrix_template
+        }
 
     
     def generate_report(
