@@ -1,489 +1,243 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-import json
-from pathlib import Path
-import tempfile
+# backend/attack_simulator.py
+import random
+import time
 from datetime import datetime
+from typing import Dict, List, Any
+import json
 
-
-
-from backend import (
-    contract_parser,
-    slither_runner,
-    mythril_runner,
-    monitor,
-    attack_simulator,
-    report_generator
-)
-from backend.attack_simulator import simulator  # ✅ This imports the instance
-
-simulator = attack_simulator.simulator
-
-from config import *
-
-
-
-# Page configuration
-st.set_page_config(
-    page_title="DeFi Security Toolkit",
-    page_icon="🛡",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Custom CSS
-st.markdown("""
-<style>
-    /* Existing styles */
-    .stAlert {
-        border-radius: 10px;
-        padding: 10px;
-    }
-
-    /* Modify .stAlert info box text to black */
-    .stAlert p {
-        color: black !important;
-    }
-
-    /* Optional: override background color if needed */
-    .stAlert[data-testid="stAlertInfo"] {
-        background-color: #aad8ff; /* softer blue */
-    }
-
-    /* Your custom vulnerability tags */
-    .vulnerability-high {
-        background-color: #ff4b4b;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 5px;
-    }
-    .vulnerability-medium {
-        background-color: #ffa500;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 5px;
-    }
-    .vulnerability-low {
-        background-color: #00cc00;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 5px;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-
-# Initialize session state
-if 'analysis_results' not in st.session_state:
-    st.session_state.analysis_results = {}
-if 'uploaded_contract' not in st.session_state:
-    st.session_state.uploaded_contract = None
-if 'monitoring_active' not in st.session_state:
-    st.session_state.monitoring_active = False
-
-# Header
-st.title("🛡 DeFi Security and Auditing Toolkit")
-st.markdown("### Professional Smart Contract Security Analysis Platform")
-
-# Sidebar
-with st.sidebar:
-    st.header("Navigation")
-    page = st.radio(
-        "Select Tool",
-        ["Contract Analysis", "Attack Simulation", "Live Monitoring", "Audit Reports", "Settings"]
-    )
+class AttackSimulator:
+    def __init__(self):
+        self.simulation_count = 0
     
-    st.divider()
-    
-    # Theme toggle
-    theme = st.selectbox("Theme", ["Light", "Dark"])
-    if theme == "Dark":
-        st.markdown("""
-        <style>
-            .stApp {
-                background-color: #1e1e1e;
-                color: #ffffff;
+    def simulate_flashloan(self, target_address: str, loan_amount: float, attack_steps: str) -> Dict[str, Any]:
+        """Simulate a flash loan attack"""
+        self.simulation_count += 1
+        
+        steps = attack_steps.split('\n')
+        execution_results = []
+        total_gas = 0
+        
+        for i, step in enumerate(steps, 1):
+            gas_used = random.randint(50000, 200000)
+            total_gas += gas_used
+            
+            # Simulate step execution
+            success_rate = random.random()
+            status = "Success" if success_rate > 0.2 else "Failed"
+            
+            step_result = {
+                "step": i,
+                "action": step.strip(),
+                "status": status,
+                "gas_used": gas_used,
+                "details": self._generate_step_details(step.strip(), loan_amount, status)
             }
-        </style>
-        """, unsafe_allow_html=True)
-
-# Main content based on selected page
-if page == "Contract Analysis":
-    st.header("📄 Smart Contract Analysis")
-    
-    # File upload
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        uploaded_file = st.file_uploader(
-            "Upload Solidity Contract (.sol)",
-            type=['sol'],
-            help="Upload your smart contract for security analysis"
-        )
-    
-    with col2:
-        analysis_type = st.multiselect(
-            "Analysis Tools",
-            ["Slither", "Mythril", "Echidna"],
-            default=["Slither"]
-        )
-    
-    if uploaded_file:
-        # Save uploaded file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.sol') as tmp_file:
-            tmp_file.write(uploaded_file.getvalue())
-            contract_path = tmp_file.name
-            st.session_state.uploaded_contract = contract_path
+            execution_results.append(step_result)
         
-        # Display contract info
-        st.info(f"📁 Uploaded: {uploaded_file.name} ({uploaded_file.size} bytes)")
+        # Calculate profits
+        gas_cost_eth = total_gas * 30e-9  # 30 gwei gas price
+        gross_profit = loan_amount * random.uniform(0.03, 0.08)  # 3-8% profit
+        net_profit = gross_profit - gas_cost_eth
         
-        # Parse contract
-        with st.expander("Contract Overview", expanded=True):
-            contract_info = contract_parser.parse_contract(contract_path)
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Functions", len(contract_info.get('functions', [])))
-            with col2:
-                st.metric("State Variables", len(contract_info.get('state_variables', [])))
-            with col3:
-                st.metric("Modifiers", len(contract_info.get('modifiers', [])))
+        successful_steps = sum(1 for step in execution_results if step["status"] == "Success")
+        attack_successful = successful_steps >= len(steps) * 0.75  # 75% success rate
         
-        # Run analysis
-        if st.button("🔍 Run Security Analysis", type="primary"):
-            with st.spinner("Analyzing contract..."):
-                results = {}
-                
-                # Slither Analysis
-                if "Slither" in analysis_type:
-                    with st.status("Running Slither analysis...", expanded=True) as status:
-                        st.write("Detecting vulnerabilities...")
-                        slither_results = slither_runner.analyze(contract_path)
-                        results['slither'] = slither_results
-                        status.update(label="Slither analysis complete!", state="complete")
-                
-                # Mythril Analysis
-                if "Mythril" in analysis_type:
-                    with st.status("Running Mythril analysis...", expanded=True) as status:
-                        st.write("Performing symbolic execution...")
-                        mythril_results = mythril_runner.analyze(contract_path)
-                        results['mythril'] = mythril_results
-                        status.update(label="Mythril analysis complete!", state="complete")
-                
-                # Echidna Analysis
-                if "Echidna" in analysis_type:
-                    with st.status("Running Echidna fuzzing...", expanded=True) as status:
-                        st.write("Fuzzing contract properties...")
-                        # Echidna integration would go here
-                        status.update(label="Echidna fuzzing complete!", state="complete")
-                
-                st.session_state.analysis_results = results
+        return {
+            "simulation_id": f"FL_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "type": "Flash Loan Attack",
+            "target": target_address,
+            "timestamp": datetime.now().isoformat(),
+            "parameters": {
+                "loan_amount": loan_amount,
+                "steps": len(steps)
+            },
+            "execution": execution_results,
+            "summary": {
+                "total_steps": len(steps),
+                "successful_steps": successful_steps,
+                "total_gas_used": total_gas,
+                "gas_cost_eth": gas_cost_eth,
+                "gross_profit": gross_profit,
+                "net_profit": net_profit,
+                "attack_successful": attack_successful
+            },
+            "risk_assessment": {
+                "risk_score": random.randint(1, 5),
+                "risk_level": random.choice(["Low", "Medium", "High"]),
+                "factors": {
+                    "profitability": "Good" if net_profit > 0 else "Poor",
+                    "gas_efficiency": "Good" if gas_cost_eth < gross_profit * 0.1 else "Poor",
+                    "execution_complexity": random.choice(["Low", "Medium", "High"])
+                }
+            }
+        }
+    
+    def simulate_mev_sandwich(self, victim_tx: str, frontrun_amount: float, backrun_amount: float) -> Dict[str, Any]:
+        """Simulate MEV sandwich attack"""
+        self.simulation_count += 1
         
-        # Display results
-        if st.session_state.analysis_results:
-            st.header("📊 Analysis Results")
-            
-            # Vulnerability summary
-            vulnerabilities = []
-            if 'slither' in st.session_state.analysis_results:
-                vulnerabilities.extend(st.session_state.analysis_results['slither'].get('vulnerabilities', []))
-            if 'mythril' in st.session_state.analysis_results:
-                vulnerabilities.extend(st.session_state.analysis_results['mythril'].get('issues', []))
-            
-            # Summary metrics
-            col1, col2, col3, col4 = st.columns(4)
-            high_count = sum(1 for v in vulnerabilities if v.get('severity') in ['high', 'critical'])
-            medium_count = sum(1 for v in vulnerabilities if v.get('severity') == 'medium')
-            low_count = sum(1 for v in vulnerabilities if v.get('severity') in ['low', 'informational'])
-            
-            with col1:
-                st.metric("🔴 Critical/High", high_count)
-            with col2:
-                st.metric("🟡 Medium", medium_count)
-            with col3:
-                st.metric("🟢 Low/Info", low_count)
-            with col4:
-                st.metric("📋 Total Issues", len(vulnerabilities))
-            
-            # Detailed findings
-            st.subheader("Detailed Findings")
-            for idx, vuln in enumerate(vulnerabilities):
-                severity = vuln.get('severity', 'unknown')
-                severity_class = f"vulnerability-{severity}"
-                
-                with st.expander(f"{vuln.get('title', 'Issue')} - {severity.upper()}", expanded=(severity in ['high', 'critical'])):
-                    st.markdown(f"*Description:* {vuln.get('description', 'N/A')}")
-                    st.markdown(f"*Location:* {vuln.get('location', 'N/A')}")
-                    if vuln.get('recommendation'):
-                        st.markdown(f"*Recommendation:* {vuln.get('recommendation')}")
-                    if vuln.get('code_snippet'):
-                        st.code(vuln.get('code_snippet'), language='solidity')
-
-elif page == "Attack Simulation":
-    st.header("⚔ Attack Simulation")
-    
-    attack_type = st.selectbox(
-        "Select Attack Type",
-        ["Flash Loan Attack", "MEV Sandwich Attack", "Front-Running"]
-    )
-    
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        if attack_type == "Flash Loan Attack":
-            st.subheader("Flash Loan Attack Simulation")
-            target_address = st.text_input("Target Contract Address", "0x...")
-            loan_amount = st.number_input("Loan Amount (ETH)", min_value=0.1, max_value=1000.0, value=10.0)
-            attack_steps = st.text_area(
-                "Attack Steps",
-                "1. Borrow flash loan\n2. Manipulate price\n3. Exploit arbitrage\n4. Repay loan"
-            )
-            
-            if st.button("🚀 Simulate Attack"):
-                with st.spinner("Simulating flash loan attack..."):
-                    results = attack_simulator.simulate_flashloan(
-                        target_address,
-                        loan_amount,
-                        attack_steps
-                    )
-                    
-                    st.success("Simulation Complete!")
-                    st.subheader("📝 Reentrancy Attack Report")
-                    st.write(results)
-
-
+        # Simulate sandwich attack execution
+        frontrun_gas = random.randint(21000, 100000)
+        backrun_gas = random.randint(21000, 100000)
+        total_gas = frontrun_gas + backrun_gas
         
-        elif attack_type == "MEV Sandwich Attack":
-            st.subheader("MEV Sandwich Attack Simulation")
-            victim_tx = st.text_input("Victim Transaction Hash", "0x...")
-            frontrun_amount = st.number_input("Frontrun Amount (ETH)", min_value=0.01, value=1.0)
-            backrun_amount = st.number_input("Backrun Amount (ETH)", min_value=0.01, value=1.0)
-            
-            if st.button("🥪 Simulate Sandwich"):
-                with st.spinner("Simulating MEV sandwich attack..."):
-                    results = attack_simulator.simulate_mev_sandwich(
-                        victim_tx,
-                        frontrun_amount,
-                        backrun_amount
-                    )
-                    
-                    st.success("Simulation Complete!")
-                    st.json(results)
-            
-        elif attack_type == "Reentrancy Attack":
-            st.subheader("Reentrancy Attack Simulation")
-            contract_address = st.text_input("Vulnerable Contract Address", "0x...")
-            attack_depth = st.slider("Attack Depth (Recursive Calls)", min_value=1, max_value=10, value=3)
-
-            if st.button("♻️ Simulate Reentrancy"):
-                with st.spinner("Simulating reentrancy attack..."):
-                    results = attack_simulator.simulate_reentrancy(
-                        contract_address,
-                        attack_depth
-                    )
-                    st.success("Simulation Complete!")
-                    st.json(results)
-
-        elif attack_type == "Front-Running":
-            st.subheader("Front-Running Attack Simulation")
-            pending_tx = st.text_input("Pending Victim Transaction Hash", "0x...")
-            gas_price_boost = st.slider("Gas Price Boost (%)", min_value=0, max_value=200, value=50)
-
-            if st.button("🚨 Simulate Front-Running"):
-                with st.spinner("Simulating front-running attack..."):
-                    results = attack_simulator.simulate_front_running(
-                        pending_tx,
-                        gas_price_boost
-                    )
-                    st.success("Simulation Complete!")
-                    st.json(results)
-    
-    with col2:
-        st.info("""
-        *Attack Simulation Notes:*
-        - Simulations run on testnet
-        - No real funds at risk
-        - Educational purposes only
-        - Results show potential impact
-        """)
-
-elif page == "Live Monitoring":
-    st.header("📡 Live Contract Monitoring")
-    
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        monitor_address = st.text_input("Contract Address to Monitor", placeholder="0x...")
-        monitor_options = st.multiselect(
-            "Monitor Events",
-            ["Transactions", "State Changes", "Large Transfers", "Suspicious Activity"],
-            default=["Transactions", "Suspicious Activity"]
-        )
-    
-    with col2:
-        if st.button("Start Monitoring", type="primary"):
-                        st.session_state.monitoring_active = True
-        if st.button("Stop Monitoring", type="secondary"):
-            st.session_state.monitoring_active = False
-    
-    if st.session_state.monitoring_active and monitor_address:
-        st.success("🟢 Monitoring Active")
+        # Calculate profits
+        frontrun_profit = frontrun_amount * random.uniform(0.02, 0.06)
+        backrun_profit = backrun_amount * random.uniform(0.015, 0.04)
+        total_profit = frontrun_profit + backrun_profit
         
-        # Real-time monitoring display
-        monitor_container = st.container()
-        with monitor_container:
-            # Create tabs for different monitoring views
-            tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "📜 Transactions", "⚠ Alerts", "📈 Analytics"])
-            
-            with tab1:
-                # Dashboard metrics
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    st.metric("Total Transactions", "1,234", "+12")
-                with col2:
-                    st.metric("Suspicious Activities", "3", "+1")
-                with col3:
-                    st.metric("Gas Price (Gwei)", "45", "-5")
-                with col4:
-                    st.metric("Contract Balance (ETH)", "125.5", "+2.3")
-                
-                # Activity chart
-                st.subheader("Transaction Activity (24h)")
-                activity_data = monitor.get_activity_data(monitor_address)
-                if activity_data is not None and not activity_data.empty:
-
-
-                    fig = px.line(activity_data, x='timestamp', y='tx_count', title='Hourly Transaction Count')
-                    st.plotly_chart(fig, use_container_width=True)
-            
-            with tab2:
-                # Transaction list
-                st.subheader("Recent Transactions")
-                transactions = monitor.get_recent_transactions(monitor_address, limit=20)
-                if transactions:
-                    tx_df = pd.DataFrame(transactions)
-                    st.dataframe(
-                        tx_df[['hash', 'from', 'to', 'value', 'gas_used', 'timestamp']],
-                        use_container_width=True
-                    )
-            
-            with tab3:
-                # Alerts
-                st.subheader("Security Alerts")
-                alerts = monitor.get_security_alerts(monitor_address)
-                for alert in alerts:
-                    alert_type = alert.get('type', 'info')
-                    if alert_type == 'critical':
-                        st.error(f"🚨 {alert['message']}")
-                    elif alert_type == 'warning':
-                        st.warning(f"⚠ {alert['message']}")
-                    else:
-                        st.info(f"ℹ {alert['message']}")
-            
-            with tab4:
-                # Analytics
-                st.subheader("Contract Analytics")
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    # Gas usage chart
-                    gas_data = monitor.get_gas_analytics(monitor_address)
-                    if gas_data is not None and not gas_data.empty:
-
-
-                        fig = px.bar(gas_data, x='function', y='avg_gas', title='Average Gas by Function')
-                        st.plotly_chart(fig, use_container_width=True)
-                
-                with col2:
-                    # Value flow chart
-                    flow_data = monitor.get_value_flow(monitor_address)
-                    if flow_data is not None and not flow_data.empty:
-                        fig = px.pie(flow_data, values='amount', names='direction', title='Value Flow Distribution')
-                        st.plotly_chart(fig, use_container_width=True)
-
-elif page == "Audit Reports":
-    st.header("📋 Audit Report Generator")
-    
-    if st.session_state.analysis_results:
-        st.success("Analysis data available for report generation")
+        gas_cost = total_gas * 30e-9
+        net_profit = total_profit - gas_cost
         
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            report_name = st.text_input("Report Name", value=f"Security_Audit_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
-            report_format = st.selectbox("Report Format", ["Markdown", "JSON", "PDF (Beta)"])
+        return {
+            "simulation_id": f"MEV_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "type": "MEV Sandwich Attack",
+            "victim_tx": victim_tx,
+            "timestamp": datetime.now().isoformat(),
+            "execution": {
+                "frontrun": {
+                    "amount": frontrun_amount,
+                    "gas_used": frontrun_gas,
+                    "profit": frontrun_profit,
+                    "status": "Success"
+                },
+                "victim_impact": {
+                    "slippage_increased": f"{random.uniform(0.5, 3.0):.2f}%",
+                    "extra_cost": random.uniform(0.01, 0.1)
+                },
+                "backrun": {
+                    "amount": backrun_amount,
+                    "gas_used": backrun_gas,
+                    "profit": backrun_profit,
+                    "status": "Success"
+                }
+            },
+            "summary": {
+                "total_profit": total_profit,
+                "gas_cost": gas_cost,
+                "net_profit": net_profit,
+                "attack_successful": net_profit > 0,
+                "victim_loss": random.uniform(0.01, 0.1)
+            }
+        }
+    
+    def simulate_reentrancy(self, contract_address: str, attack_depth: int) -> Dict[str, Any]:
+        """Simulate reentrancy attack"""
+        self.simulation_count += 1
+        
+        # Simulate recursive calls
+        calls = []
+        funds_drained = 0
+        total_gas = 0
+        
+        for i in range(attack_depth):
+            call_gas = random.randint(80000, 200000)
+            total_gas += call_gas
             
-            include_sections = st.multiselect(
-                "Include Sections",
-                ["Executive Summary", "Vulnerability Details", "Code Analysis", "Recommendations", "Risk Matrix"],
-                default=["Executive Summary", "Vulnerability Details", "Recommendations"]
-            )
+            # Each call drains some funds
+            drained_amount = random.uniform(0.5, 2.0)
+            funds_drained += drained_amount
+            
+            calls.append({
+                "call_depth": i + 1,
+                "gas_used": call_gas,
+                "funds_drained": drained_amount,
+                "status": "Success" if random.random() > 0.1 else "Reverted"
+            })
         
-        with col2:
-            severity_filter = st.multiselect(
-                "Include Severities",
-                ["Critical", "High", "Medium", "Low", "Informational"],
-                default=["Critical", "High", "Medium"]
-            )
+        gas_cost = total_gas * 30e-9
+        net_profit = funds_drained - gas_cost
         
-        if st.button("📄 Generate Report", type="primary"):
-            with st.spinner("Generating audit report..."):
-                report = report_generator.generate_report(
-                    st.session_state.analysis_results,
-                    report_name,
-                    report_format,
-                    include_sections,
-                    severity_filter
-                )
-                
-                st.success("Report generated successfully!")
-                
-                # Display report preview
-                with st.expander("Report Preview", expanded=True):
-                    if report_format == "Markdown":
-                        st.markdown(report['content'])
-                    elif report_format == "JSON":
-                        st.json(report['content'])
-                
-                # Download button
-                st.download_button(
-                    label="⬇ Download Report",
-                    data=report['content'],
-                    file_name=f"{report_name}.{report_format.lower()}",
-                    mime=report['mime_type']
-                )
-    else:
-        st.warning("No analysis data available. Please run contract analysis first.")
+        return {
+            "simulation_id": f"RE_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "type": "Reentrancy Attack",
+            "contract": contract_address,
+            "timestamp": datetime.now().isoformat(),
+            "parameters": {
+                "attack_depth": attack_depth,
+                "target_function": "withdraw()"
+            },
+            "execution": {
+                "recursive_calls": calls,
+                "total_calls": len(calls),
+                "successful_calls": sum(1 for call in calls if call["status"] == "Success")
+            },
+            "summary": {
+                "funds_drained": funds_drained,
+                "gas_cost": gas_cost,
+                "net_profit": net_profit,
+                "attack_successful": net_profit > 0,
+                "contract_vulnerable": True
+            }
+        }
+    
+    def simulate_front_running(self, victim_tx: str, gas_price_boost: int) -> Dict[str, Any]:
+        """Simulate front-running attack"""
+        self.simulation_count += 1
+        
+        # Simulate front-running execution
+        base_gas_price = 30  # 30 gwei
+        boosted_gas_price = base_gas_price * (1 + gas_price_boost / 100)
+        gas_used = random.randint(21000, 150000)
+        
+        # Calculate if front-run was successful
+        success_probability = min(0.95, gas_price_boost / 100 + 0.3)  # Higher gas boost = higher success
+        front_run_successful = random.random() < success_probability
+        
+        if front_run_successful:
+            profit = random.uniform(0.05, 0.5)  # ETH profit
+        else:
+            profit = 0
+        
+        gas_cost = gas_used * boosted_gas_price * 1e-9
+        net_profit = profit - gas_cost
+        
+        return {
+            "simulation_id": f"FR_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "type": "Front-Running Attack",
+            "victim_tx": victim_tx,
+            "timestamp": datetime.now().isoformat(),
+            "parameters": {
+                "gas_price_boost": gas_price_boost,
+                "base_gas_price": base_gas_price,
+                "boosted_gas_price": boosted_gas_price
+            },
+            "execution": {
+                "front_run_tx": {
+                    "gas_price": boosted_gas_price,
+                    "gas_used": gas_used,
+                    "status": "Success" if front_run_successful else "Failed",
+                    "block_position": 1 if front_run_successful else random.randint(2, 10)
+                },
+                "victim_tx": {
+                    "original_gas_price": base_gas_price,
+                    "block_position": 2 if front_run_successful else 1,
+                    "impact": "Negatively affected" if front_run_successful else "Unaffected"
+                }
+            },
+            "summary": {
+                "attack_successful": front_run_successful,
+                "profit_extracted": profit,
+                "gas_cost": gas_cost,
+                "net_profit": net_profit,
+                "victim_loss": profit if front_run_successful else 0
+            }
+        }
+    
+    def _generate_step_details(self, step: str, loan_amount: float, status: str) -> str:
+        """Generate realistic details for attack steps"""
+        if "borrow" in step.lower():
+            return f"Borrowed {loan_amount} ETH from lending pool"
+        elif "manipulate" in step.lower():
+            percentage = random.uniform(1, 10)
+            return f"Price manipulated by {percentage:.2f}%"
+        elif "arbitrage" in step.lower() or "exploit" in step.lower():
+            profit = loan_amount * random.uniform(0.02, 0.08)
+            return f"Profit: {profit:.4f} ETH"
+        elif "repay" in step.lower():
+            return f"Repaid {loan_amount} ETH + fees"
+        else:
+            return f"Step executed with {status.lower()} status"
 
-elif page == "Settings":
-    st.header("⚙ Settings")
-    
-    # API Configuration
-    st.subheader("API Configuration")
-    col1, col2 = st.columns(2)
-    with col1:
-        etherscan_key = st.text_input("Etherscan API Key", value="*" * 20, type="password")
-        tenderly_key = st.text_input("Tenderly API Key", value="*" * 20, type="password")
-    with col2:
-        infura_key = st.text_input("Infura Project ID", value="*" * 20, type="password")
-        network = st.selectbox("Default Network", ["Mainnet", "Sepolia", "Goerli", "Polygon"])
-    
-    # Analysis Settings
-    st.subheader("Analysis Settings")
-    col1, col2 = st.columns(2)
-    with col1:
-        slither_timeout = st.number_input("Slither Timeout (seconds)", min_value=60, max_value=1800, value=300)
-        mythril_timeout = st.number_input("Mythril Timeout (seconds)", min_value=60, max_value=3600, value=600)
-    with col2:
-        max_file_size = st.number_input("Max File Size (MB)", min_value=1, max_value=50, value=5)
-        auto_save_reports = st.checkbox("Auto-save Reports", value=True)
-    
-    # Save settings
-    if st.button("💾 Save Settings"):
-        # Here you would save settings to config file or database
-        st.success("Settings saved successfully!")
-
-# Footer
-st.divider()
-st.markdown("""
-<div style='text-align: center; color: #888;'>
-    DeFi Security Toolkit v1.0 | Built with ❤ for Crypto Security
-</div>
-""", unsafe_allow_html=True)
+# Create singleton instance
+simulator = AttackSimulator()
