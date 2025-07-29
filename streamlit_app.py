@@ -311,7 +311,9 @@ elif page == "Live Monitoring":
                 # Activity chart
                 st.subheader("Transaction Activity (24h)")
                 activity_data = monitor.get_activity_data(monitor_address)
-                if activity_data:
+                if activity_data is not None and not activity_data.empty:
+
+
                     fig = px.line(activity_data, x='timestamp', y='tx_count', title='Hourly Transaction Count')
                     st.plotly_chart(fig, use_container_width=True)
             
