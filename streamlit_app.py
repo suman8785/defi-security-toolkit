@@ -243,7 +243,10 @@ elif page == "Attack Simulation":
                     )
                     
                     st.success("Simulation Complete!")
-                    st.json(results)
+                    st.subheader("📝 Reentrancy Attack Report")
+                    st.write(results)
+
+
         
         elif attack_type == "MEV Sandwich Attack":
             st.subheader("MEV Sandwich Attack Simulation")
