@@ -258,14 +258,14 @@ class AttackSimulator:
 
         self.simulations.append(simulation)
         return simulation
-    def run_reentrancy_simulation(target_address: str, attack_depth: int) -> Dict[str, Any]:
-        return simulator.simulate_reentrancy(target_address, attack_depth)
+    
 
 
 
 # Module-level functions
 simulator = AttackSimulator()
-
+def run_reentrancy_simulation(target_address: str, attack_depth: int) -> Dict[str, Any]:
+    return simulator.simulate_reentrancy(target_address, attack_depth)
 def simulate_flashloan(target_address: str, loan_amount: float, attack_steps: str) -> Dict[str, Any]:
     return simulator.simulate_flashloan(target_address, loan_amount, attack_steps)
 
