@@ -224,7 +224,7 @@ elif page == "Attack Simulation":
     
     attack_type = st.selectbox(
         "Select Attack Type",
-        ["Flash Loan Attack", "MEV Sandwich Attack", "Front-Running"]
+        ["Flash Loan Attack", "MEV Sandwich Attack","Reentrancy Attack",  "Front-Running"]
     )
     
     col1, col2 = st.columns([2, 1])
