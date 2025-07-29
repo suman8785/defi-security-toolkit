@@ -349,14 +349,16 @@ elif page == "Live Monitoring":
                 with col1:
                     # Gas usage chart
                     gas_data = monitor.get_gas_analytics(monitor_address)
-                    if gas_data:
+                    if gas_data is not None and not gas_data.empty:
+
+
                         fig = px.bar(gas_data, x='function', y='avg_gas', title='Average Gas by Function')
                         st.plotly_chart(fig, use_container_width=True)
                 
                 with col2:
                     # Value flow chart
                     flow_data = monitor.get_value_flow(monitor_address)
-                    if flow_data:
+                    if flow_data is not None and not flow_data.empty:
                         fig = px.pie(flow_data, values='amount', names='direction', title='Value Flow Distribution')
                         st.plotly_chart(fig, use_container_width=True)
 
