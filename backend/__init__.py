@@ -5,7 +5,7 @@ from . import monitor
 from . import attack_simulator
 from . import report_generator
 
-_all_ = [
+__all__ = [
     'contract_parser',
     'slither_runner',
     'mythril_runner',
