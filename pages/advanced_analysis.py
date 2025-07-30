@@ -152,7 +152,7 @@ def show_advanced_analysis():
                     st.success("No pattern matches found!")
     
     elif analysis_type == "Historical Analysis":
-    st.subheader("📊 Historical Vulnerability Analysis")
+        st.subheader("📊 Historical Vulnerability Analysis")
     
     # Generate sample historical data
     
