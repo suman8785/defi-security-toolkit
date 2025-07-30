@@ -12,14 +12,14 @@ class AttackSimulator:
         """Simulate a flash loan attack"""
         simulation_id = f"FL_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Parse attack steps
+        # Parse attacking steps
         if isinstance(attack_steps, str):
             try:
-                # Try to parse as JSON array first
+                
                 import json
                 steps = json.loads(attack_steps)
             except:
-                # Otherwise split by newlines
+               
                 steps = [s.strip() for s in attack_steps.split('\n') if s.strip()]
         else:
             steps = attack_steps if isinstance(attack_steps, list) else []
@@ -59,9 +59,9 @@ class AttackSimulator:
             
             execution_results.append(result)
         
-        # Calculate totals - now safe because all results have gas_used
+        # Calculate totals 
         total_gas = sum(r['gas_used'] for r in execution_results)
-        gas_cost_eth = total_gas * 0.00000003  # Assume 30 gwei gas price
+        gas_cost_eth = total_gas * 0.00000003  
         net_profit = total_profit - gas_cost_eth
         
         simulation = {
