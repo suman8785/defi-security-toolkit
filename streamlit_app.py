@@ -270,32 +270,125 @@ elif page == "Attack Simulation":
                     st.json(results)
             
         elif attack_type == "Reentrancy Attack":
-            st.subheader("Reentrancy Attack Simulation")
-            contract_address = st.text_input("Vulnerable Contract Address", "0x...")
-            attack_depth = st.slider("Attack Depth (Recursive Calls)", min_value=1, max_value=10, value=3)
-
-            if st.button("♻️ Simulate Reentrancy"):
+            st.subheader("🔄 Reentrancy Attack Simulation")
+            
+            contract_balance = st.number_input("Contract Balance (ETH)", min_value=1.0, max_value=1000.0, value=100.0)
+            attacker_deposit = st.number_input("Attacker Initial Deposit (ETH)", min_value=0.1, max_value=10.0, value=1.0)
+            attack_iterations = st.slider("Attack Iterations", min_value=1, max_value=10, value=3)
+            
+            if st.button("🔄 Simulate Reentrancy"):
                 with st.spinner("Simulating reentrancy attack..."):
-                    results = attack_simulator.simulate_reentrancy(
-                        contract_address,
-                        attack_depth
-                    )
+                    # Calculate attack outcome
+                    stolen_amount = min(attacker_deposit * attack_iterations, contract_balance)
+                    
                     st.success("Simulation Complete!")
-                    st.json(results)
+                    
+                    # Attack flow visualization
+                    st.subheader("Attack Flow")
+                    for i in range(attack_iterations):
+                        if i * attacker_deposit < contract_balance:
+                            st.write(f"{i+1}. Withdraw {attacker_deposit} ETH → Reenter → Balance not updated")
+                        else:
+                            st.write(f"{i+1}. Attack stopped - Contract drained")
+                            break
+                    
+                    # Results
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("ETH Stolen", f"{stolen_amount:.2f}")
+                    with col2:
+                        st.metric("Contract Loss", f"{(stolen_amount/contract_balance)*100:.1f}%")
+                    with col3:
+                        st.metric("Attack Success", "✅ Yes" if stolen_amount > attacker_deposit else "❌ No")
+                    
+                    # Mitigation
+                    with st.expander("🛡 How to Prevent"):
+                        st.markdown("""
+                        *Prevention Methods:*
+                        1. *Checks-Effects-Interactions Pattern*: Update state before external calls
+                        2. *ReentrancyGuard*: Use OpenZeppelin's ReentrancyGuard
+                        3. *Pull Payment Pattern*: Let users withdraw instead of pushing payments
+                        
+                        *Fixed Code Example:*
+                        solidity
+                        function withdraw(uint amount) public {
+                            require(balances[msg.sender] >= amount);
+                            balances[msg.sender] -= amount;  // Update FIRST
+                            (bool success, ) = msg.sender.call{value: amount}("");
+                            require(success);
+                        }
+                        
+                        """)
+
 
         elif attack_type == "Front-Running":
-            st.subheader("Front-Running Attack Simulation")
-            pending_tx = st.text_input("Pending Victim Transaction Hash", "0x...")
-            gas_price_boost = st.slider("Gas Price Boost (%)", min_value=0, max_value=200, value=50)
-
-            if st.button("🚨 Simulate Front-Running"):
+            st.subheader("🏃 Front-Running Attack Simulation")
+            
+            # DEX trade parameters
+            token_pair = st.selectbox("Token Pair", ["ETH/USDC", "ETH/DAI", "WBTC/ETH"])
+            victim_trade_size = st.number_input("Victim Trade Size (ETH)", min_value=1.0, max_value=100.0, value=10.0)
+            slippage_tolerance = st.slider("Victim Slippage Tolerance (%)", min_value=0.1, max_value=5.0, value=1.0, step=0.1)
+            
+            st.subheader("Attacker Parameters")
+            front_run_size = st.number_input("Front-run Trade Size (ETH)", min_value=1.0, max_value=50.0, value=5.0)
+            gas_multiplier = st.slider("Gas Price Multiplier", min_value=1.1, max_value=5.0, value=2.0, step=0.1)
+            
+            if st.button("🏃 Simulate Front-Running"):
                 with st.spinner("Simulating front-running attack..."):
-                    results = attack_simulator.simulate_front_running(
-                        pending_tx,
-                        gas_price_boost
-                    )
-                    st.success("Simulation Complete!")
-                    st.json(results)
+                    # Simulate price impact
+                    initial_price = 2000  # USDC per ETH
+                    price_impact_percent = (front_run_size / 100) * 2  # Simplified impact
+                    new_price = initial_price * (1 + price_impact_percent / 100)
+                    
+                    # Calculate victim's loss
+                    expected_tokens = victim_trade_size * initial_price
+                    actual_tokens = victim_trade_size * new_price * (1 - slippage_tolerance / 100)
+                    victim_loss = expected_tokens - actual_tokens
+                    
+                    # Attacker profit (simplified)
+                    attacker_profit = (new_price - initial_price) * front_run_size * 0.8  # 80% efficiency
+                    
+                    st.success("Front-Running Simulation Complete!")
+                    
+                    # Transaction ordering
+                    st.subheader("Transaction Order in Block")
+                    transactions = [
+                        {"order": 1, "type": "Front-run", "from": "Attacker", "gas": f"{100 * gas_multiplier:.0f} gwei", "effect": f"Price ↑ {price_impact_percent:.2f}%"},
+                        {"order": 2, "type": "Victim Trade", "from": "User", "gas": "100 gwei", "effect": f"Gets {victim_loss:.0f} less USDC"},
+                        {"order": 3, "type": "Back-run", "from": "Attacker", "gas": "95 gwei", "effect": f"Profit: {attacker_profit:.2f} USDC"}
+                    ]
+                    
+                    for tx in transactions:
+                        col1, col2, col3, col4 = st.columns([1, 2, 2, 3])
+                        with col1:
+                            st.write(f"#{tx['order']}")
+                        with col2:
+                            st.write(tx['type'])
+                        with col3:
+                            st.write(tx['gas'])
+                        with col4:
+                            st.write(tx['effect'])
+                    
+                    # Results metrics
+                    st.subheader("Attack Results")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Attacker Profit", f"${attacker_profit:.2f}")
+                    with col2:
+                        st.metric("Victim Loss", f"${victim_loss:.2f}")
+                    with col3:
+                        st.metric("Price Impact", f"{price_impact_percent:.2f}%")
+                    
+                    # Prevention methods
+                    with st.expander("🛡 Protection Methods"):
+                        st.markdown("""
+                        *How to Protect Against Front-Running:*
+                        1. *Commit-Reveal Schemes*: Hide trade details until execution
+                        2. *Flashbots/MEV Protection*: Use private mempools
+                        3. *Time-Weighted Average Price (TWAP)*: Split large trades
+                        4. *Slippage Protection*: Set tight slippage tolerance
+                        5. *MEV-resistant DEXs*: Use CowSwap, 1inch Fusion
+                        """)
     
     with col2:
         st.info("""
