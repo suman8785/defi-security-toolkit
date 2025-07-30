@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from backend import gas_analyzer, formal_verifier, vulnerability_db
-import plotly.express as px
-from datetime import datetime, timedelta
+
 
 if 'uploaded_contract' not in st.session_state:
     st.session_state.uploaded_contract = None
@@ -156,7 +155,7 @@ def show_advanced_analysis():
     st.subheader("📊 Historical Vulnerability Analysis")
     
     # Generate sample historical data
-    import pandas as pd
+    
     import plotly.express as px
     from datetime import datetime, timedelta
     
