@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import random
 import plotly.graph_objects as go
 from backend import gas_analyzer, formal_verifier, vulnerability_db
 import plotly.express as px
